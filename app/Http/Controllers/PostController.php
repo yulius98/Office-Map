@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
 use App\Models\Post;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class PostController extends Controller
 {
@@ -46,8 +46,11 @@ class PostController extends Controller
     public function show(Post $post)
     {
         // Use Policy to check if user can view this post
-        // Returns true for: published posts (everyone) OR draft/scheduled posts (author only)
-        if (! Gate::allows('view', $post)) {
+        // Policy logic: published posts (everyone) OR draft/scheduled posts (author only)
+        // Return 404 for unauthorized access (as per requirement)
+        try {
+            $this->authorize('view', $post);
+        } catch (AuthorizationException $e) {
             abort(404);
         }
 
