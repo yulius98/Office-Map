@@ -25,7 +25,7 @@ class StorePostRequest extends FormRequest
         return [
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'is_draft' => 'sometimes|boolean',
+            'is_draft' => 'boolean',
             'published_at' => 'nullable|date',
         ];
     }
@@ -35,9 +35,14 @@ class StorePostRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        // If is_draft is not provided, default to false
+        // Set user_id from authenticated user
+        $this->merge([
+            'user_id' => Auth::id(),
+        ]);
+
+        // Set default value for is_draft if not provided
         if (! $this->has('is_draft')) {
-            $this->merge(['is_draft' => false]);
+            $this->merge(['is_draft' => true]);
         }
     }
 }
