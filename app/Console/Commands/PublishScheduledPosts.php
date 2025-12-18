@@ -26,6 +26,7 @@ class PublishScheduledPosts extends Command
      */
     public function handle(): int
     {
+        // Publish posts that are scheduled and their publish date has arrived
         $publishedCount = Post::where('is_draft', true)
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now())
