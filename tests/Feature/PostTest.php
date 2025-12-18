@@ -51,7 +51,21 @@ class PostTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonCount(2, 'data')
             ->assertJsonFragment(['id' => $publishedPost1->id])
-            ->assertJsonFragment(['id' => $publishedPost2->id]);
+            ->assertJsonFragment(['id' => $publishedPost2->id])
+            ->assertJsonStructure([
+                'data' => [
+                    '*' => [
+                        'id',
+                        'title',
+                        'content',
+                        'user' => [
+                            'id',
+                            'name',
+                            'email',
+                        ],
+                    ],
+                ],
+            ]);
     }
 
     #[Test]
@@ -117,7 +131,7 @@ class PostTest extends TestCase
     }
 
     #[Test]
-    public function it_can_show_own_draft_post_to_author()
+    public function author_can_view_their_own_draft_post()
     {
         /** @var User $user */
         $user = User::factory()->create();
@@ -137,7 +151,7 @@ class PostTest extends TestCase
     }
 
     #[Test]
-    public function it_cannot_show_draft_post_to_non_author()
+    public function it_returns_404_for_draft_post_for_non_author()
     {
         /** @var User $author */
         $author = User::factory()->create();
@@ -151,11 +165,11 @@ class PostTest extends TestCase
         $response = $this->actingAs($otherUser)
             ->getJson(route('posts.show', $post));
 
-        $response->assertStatus(403);
+        $response->assertStatus(404);
     }
 
     #[Test]
-    public function it_cannot_show_draft_post_to_guest()
+    public function it_returns_404_for_draft_post_for_guest()
     {
         /** @var User $author */
         $author = User::factory()->create();
@@ -166,11 +180,11 @@ class PostTest extends TestCase
 
         $response = $this->getJson(route('posts.show', $post));
 
-        $response->assertStatus(403);
+        $response->assertStatus(404);
     }
 
     #[Test]
-    public function it_cannot_show_future_scheduled_post_to_non_author()
+    public function it_returns_404_for_future_scheduled_post_for_non_author()
     {
         /** @var User $author */
         $author = User::factory()->create();
@@ -185,7 +199,28 @@ class PostTest extends TestCase
         $response = $this->actingAs($otherUser)
             ->getJson(route('posts.show', $post));
 
-        $response->assertStatus(403);
+        $response->assertStatus(404);
+    }
+
+    #[Test]
+    public function author_can_view_their_own_scheduled_post()
+    {
+        /** @var User $user */
+        $user = User::factory()->create();
+        $post = Post::factory()->create([
+            'user_id' => $user->id,
+            'is_draft' => false,
+            'published_at' => now()->addDay(),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->getJson(route('posts.show', $post));
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'id' => $post->id,
+                'is_draft' => false,
+            ]);
     }
 
     #[Test]
