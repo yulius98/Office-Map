@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
 use App\Models\Post;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class PostController extends Controller
 {
@@ -35,7 +35,7 @@ class PostController extends Controller
      */
     public function store(StorePostRequest $request)
     {
-        $post = Auth::user()->posts()->create($request->validated());
+        $post = $request->user()->posts()->create($request->validated());
 
         return response()->json($post->load('user'), 201);
     }
@@ -45,8 +45,9 @@ class PostController extends Controller
      */
     public function show(Post $post)
     {
-        // Return 404 if post is draft or scheduled
-        if ($post->is_draft || ($post->published_at && $post->published_at->isFuture())) {
+        // Use Policy to check if user can view this post
+        // Returns true for: published posts (everyone) OR draft/scheduled posts (author only)
+        if (! Gate::allows('view', $post)) {
             abort(404);
         }
 
