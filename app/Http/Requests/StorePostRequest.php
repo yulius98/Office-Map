@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class StorePostRequest extends FormRequest
 {
@@ -11,7 +12,7 @@ class StorePostRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return Auth::check();
     }
 
     /**
@@ -25,7 +26,18 @@ class StorePostRequest extends FormRequest
             'title' => 'required|string|max:255',
             'content' => 'required|string',
             'is_draft' => 'sometimes|boolean',
-            'published_at' => 'nullable|date|after:now',
+            'published_at' => 'nullable|date',
         ];
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        // If is_draft is not provided, default to false
+        if (! $this->has('is_draft')) {
+            $this->merge(['is_draft' => false]);
+        }
     }
 }

@@ -12,7 +12,7 @@ class UpdatePostRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->route('post')?->user_id === Auth::id();
+        return Auth::check();
     }
 
     /**
@@ -23,10 +23,10 @@ class UpdatePostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
+            'title' => 'sometimes|required|string|max:255',
+            'content' => 'sometimes|required|string',
             'is_draft' => 'sometimes|boolean',
-            'published_at' => 'nullable|date|after:now',
+            'published_at' => 'nullable|date',
         ];
     }
 }

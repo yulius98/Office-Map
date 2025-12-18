@@ -27,7 +27,7 @@ class PostController extends Controller
      */
     public function create()
     {
-        //
+        return 'posts.create';
     }
 
     /**
@@ -43,17 +43,22 @@ class PostController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Post $post)
     {
-        //
+        // Return 404 if post is draft or scheduled
+        if ($post->is_draft || ($post->published_at && $post->published_at->isFuture())) {
+            abort(404);
+        }
+
+        return response()->json($post->load('user'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Post $post)
     {
-        //
+        return 'posts.edit';
     }
 
     /**
@@ -61,7 +66,9 @@ class PostController extends Controller
      */
     public function update(UpdatePostRequest $request, Post $post)
     {
-        $post->update($request->validate());
+        $this->authorize('update', $post);
+
+        $post->update($request->validated());
 
         return response()->json($post->load('user'));
     }
@@ -71,7 +78,8 @@ class PostController extends Controller
      */
     public function destroy(Post $post)
     {
-        $this->authorize('update', $post);
+        $this->authorize('delete', $post);
+
         $post->delete();
 
         return response()->json(null, 204);
